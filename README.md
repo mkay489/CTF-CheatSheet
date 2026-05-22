@@ -31,7 +31,7 @@ My personal CTF reference built from hundreds of hours on HackTheBox, TryHackMe 
 Open CTF-CHEATSHEET.md directly or use any Markdown viewer.
 
 ```bash
-git clone https://github.com/yourusername/ctf-cheatsheet
+git clone https://github.com/mkay489/ctf-cheatsheet
 cd ctf-cheatsheet
 
 # Search for a technique
