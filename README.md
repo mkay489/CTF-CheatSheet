@@ -1,6 +1,5 @@
 # CTF-CheatSheet
 
-![Stars](https://img.shields.io/github/stars/mkay489/ctf-cheatsheet?style=flat-square)
 ![Categories](https://img.shields.io/badge/categories-15-orange?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
